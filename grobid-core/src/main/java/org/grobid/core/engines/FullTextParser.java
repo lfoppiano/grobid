@@ -147,7 +147,7 @@ public class FullTextParser extends AbstractParser {
                 // above, use the segmentation model result
                 if (doc.getMetadata() != null) {
                     Metadata metadata = doc.getMetadata();
-                    if (metadata.getTitle() != null)
+                    if (metadata.getTitle() != null && resHeader.getTitle() == null)
                         resHeader.setTitle(metadata.getTitle());
                     if (metadata.getAuthor() != null) {
                         resHeader.setAuthors(metadata.getAuthor());
