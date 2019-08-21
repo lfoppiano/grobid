@@ -43,25 +43,25 @@ public class FullTextParserTest {
         GrobidFactory.reset();
     }
 
-    @Test
-    public void testProcess2() throws Exception {
-        String text = "(a) shows the temperature variation of the 31 P-\n" +
-            "NMR spectrum for x ¼ 0:25, which was obtained by \n" +
-            "sweeping magnetic fields. A single sharp spectrum was \n" +
-            "observed above T N , but no anomaly was detected in the NMR spectrum at the structural transition T S determined by \n" +
-            "xx . Below T N , a broad NMR spectrum with a Gaussian \n" +
-            "shape develops gradually and coexists with a sharp peak at \n" +
-            "around T on \n" +
-            "c $ 30 K. We measured 1=T 1 at the sharp and \n" +
-            "broad peaks shown by the solid black and dashed red arrows, \n" +
-            "respectively. ";
-
-        Document documentMock = createMock(Document.class);
-        List<LayoutToken> layoutTokens = GrobidAnalyzer.getInstance().tokenizeWithLayoutToken(text);
-
-        target.processShort2(layoutTokens, documentMock);
-
-    }
+//    @Test
+//    public void testProcess2() throws Exception {
+//        String text = "(a) shows the temperature variation of the 31 P-\n" +
+//            "NMR spectrum for x ¼ 0:25, which was obtained by \n" +
+//            "sweeping magnetic fields. A single sharp spectrum was \n" +
+//            "observed above T N , but no anomaly was detected in the NMR spectrum at the structural transition T S determined by \n" +
+//            "xx . Below T N , a broad NMR spectrum with a Gaussian \n" +
+//            "shape develops gradually and coexists with a sharp peak at \n" +
+//            "around T on \n" +
+//            "c $ 30 K. We measured 1=T 1 at the sharp and \n" +
+//            "broad peaks shown by the solid black and dashed red arrows, \n" +
+//            "respectively. ";
+//
+//        Document documentMock = createMock(Document.class);
+//        List<LayoutToken> layoutTokens = GrobidAnalyzer.getInstance().tokenizeWithLayoutToken(text);
+//
+//        target.processShort2(layoutTokens, documentMock);
+//
+//    }
 
     @Test
     public void testGetDocumentPieces1() throws Exception {
