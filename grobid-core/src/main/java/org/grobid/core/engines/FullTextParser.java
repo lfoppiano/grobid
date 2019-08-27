@@ -1,32 +1,19 @@
 package org.grobid.core.engines;
 
 import com.google.common.collect.Iterables;
-
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.io.FileUtils;
-
+import org.apache.commons.lang3.tuple.Pair;
 import org.grobid.core.GrobidModels;
-import org.grobid.core.data.BibDataSet;
-import org.grobid.core.data.BiblioItem;
-import org.grobid.core.data.Figure;
-import org.grobid.core.data.Table;
-import org.grobid.core.data.Equation;
-import org.grobid.core.data.Metadata;
-import org.grobid.core.data.Person;
-import org.grobid.core.document.Document;
-import org.grobid.core.document.DocumentPiece;
-import org.grobid.core.document.DocumentPointer;
-import org.grobid.core.document.DocumentSource;
-import org.grobid.core.document.TEIFormatter;
+import org.grobid.core.data.*;
+import org.grobid.core.document.*;
 import org.grobid.core.engines.citations.LabeledReferenceResult;
 import org.grobid.core.engines.citations.ReferenceSegmenter;
 import org.grobid.core.engines.config.GrobidAnalysisConfig;
 import org.grobid.core.engines.counters.CitationParserCounters;
 import org.grobid.core.engines.label.SegmentationLabels;
-import org.grobid.core.engines.label.TaggingLabels;
 import org.grobid.core.engines.label.TaggingLabel;
+import org.grobid.core.engines.label.TaggingLabels;
 import org.grobid.core.engines.tagging.GenericTaggerUtils;
 import org.grobid.core.exceptions.GrobidException;
 import org.grobid.core.exceptions.GrobidResourceException;
@@ -36,33 +23,15 @@ import org.grobid.core.lang.Language;
 import org.grobid.core.layout.*;
 import org.grobid.core.tokenization.TaggingTokenCluster;
 import org.grobid.core.tokenization.TaggingTokenClusteror;
-import org.grobid.core.utilities.LanguageUtilities;
-import org.grobid.core.utilities.TextUtilities;
-import org.grobid.core.utilities.KeyGen;
-import org.grobid.core.utilities.LayoutTokensUtil;
-import org.grobid.core.utilities.GrobidProperties;
-import org.grobid.core.utilities.Consolidation;
-import org.grobid.core.utilities.matching.ReferenceMarkerMatcher;
+import org.grobid.core.utilities.*;
 import org.grobid.core.utilities.matching.EntityMatcherException;
-
+import org.grobid.core.utilities.matching.ReferenceMarkerMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-
+import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.SortedSet;
-import java.util.StringTokenizer;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.regex.Matcher;
 
 import static org.apache.commons.lang3.StringUtils.*;
@@ -183,6 +152,28 @@ public class FullTextParser extends AbstractParser {
                 }
             }
 
+            // structure the abstract using the fulltext model
+            /*if ( (resHeader.getAbstract() != null) && (resHeader.getAbstract().length() > 0) ) {
+                List<LayoutToken> abstractTokens = resHeader.getLayoutTokens(TaggingLabels.HEADER_ABSTRACT);
+                if ( (abstractTokens != null) && (abstractTokens.size()>0) ) {
+                    SortedSet<DocumentPiece> documentParts = getDocumentPieces2(abstractTokens, doc);
+
+                    featSeg = getBodyTextFeatured(doc, documentParts);
+                    String rese2 = null;
+                    List<LayoutToken> tokenizationsAbstract = null;
+                    if (featSeg != null) {
+                        // if featSeg is null, it usually means that no body segment is found in the
+                        // document segmentation
+                        String abstractText = featSeg.getLeft();
+                        tokenizationsAbstract = featSeg.getRight().getTokenization();
+                        if (isNotEmpty(trim(abstractText))) 
+                            rese2 = label(abstractText);
+                        resHeader.setLabeledAbstract(rese2);
+                        resHeader.setLayoutTokensForLabel(tokenizationsAbstract, TaggingLabels.HEADER_ABSTRACT);
+                    }
+                }
+            }*/
+
             // citation processing
             // consolidation, if selected, is not done individually for each citation but 
             // in a second stage for all citations
@@ -292,68 +283,6 @@ public class FullTextParser extends AbstractParser {
         }
     }
 
-    /**
-     * Process a simple segment of layout tokens with the full text model.
-     * Return null if provided Layout Tokens is empty or if structuring failed.
-     */
-    public Pair<String, List<LayoutToken>> processShortNew(List<LayoutToken> tokens, Document doc) {
-        if (CollectionUtils.isEmpty(tokens))
-            return null;
-
-        SortedSet<DocumentPiece> documentParts = new TreeSet<DocumentPiece>();
-        // identify continuous sequence of layout tokens in the abstract
-        int posStartPiece = -1;
-        int currentOffset = -1;
-        int startBlockPtr = -1;
-        LayoutToken previousToken = null;
-        for(LayoutToken token : tokens) {
-            if (currentOffset == -1) {
-                posStartPiece = getDocIndexToken(doc, token);
-                startBlockPtr = token.getBlockPtr();
-            } else if (token.getOffset() != currentOffset + previousToken.getText().length()) {
-                // new DocumentPiece to be added
-                DocumentPointer dp1 = new DocumentPointer(doc, startBlockPtr, posStartPiece);
-                DocumentPointer dp2 = new DocumentPointer(doc,
-                    previousToken.getBlockPtr(),
-                    getDocIndexToken(doc, previousToken));
-                DocumentPiece piece = new DocumentPiece(dp1, dp2);
-                documentParts.add(piece);
-
-                // set index for the next DocumentPiece
-                posStartPiece = getDocIndexToken(doc, token);
-                startBlockPtr = token.getBlockPtr();
-            }
-            currentOffset = token.getOffset();
-            previousToken = token;
-        }
-        // we still need to add the last document piece
-        // conditional below should always be true because abstract is not null if we reach this part, but paranoia is good when programming
-        if (posStartPiece != -1) {
-            DocumentPointer dp1 = new DocumentPointer(doc, startBlockPtr, posStartPiece);
-            DocumentPointer dp2 = new DocumentPointer(doc,
-                previousToken.getBlockPtr(),
-                getDocIndexToken(doc, previousToken));
-            DocumentPiece piece = new DocumentPiece(dp1, dp2);
-            documentParts.add(piece);
-        }
-
-        Pair<String, LayoutTokenization> featSeg = getBodyTextFeatured(doc, documentParts);
-        String res = "";
-        List<LayoutToken> layoutTokenization = new ArrayList<>();
-        if (featSeg != null) {
-            String featuredText = featSeg.getLeft();
-            LayoutTokenization layouts = featSeg.getRight();
-            if (layouts != null)
-                layoutTokenization = layouts.getTokenization();
-            if (isNotBlank(featuredText)) {
-                res = label(featuredText);
-            }
-        }  else
-            return null;
-
-        return Pair.of(res, layoutTokenization);
-    }
-
     public Pair<String, List<LayoutToken>> processShort(List<LayoutToken> tokens, Document doc) {
         if (CollectionUtils.isEmpty(tokens))
             return null;
@@ -374,7 +303,7 @@ public class FullTextParser extends AbstractParser {
                 }
             }
             currentChunk.add(token);
-            currentPos = token.getOffset() + token.getText().length();
+                    currentPos = token.getOffset() + token.getText().length();
         }
         // add last chunk
         tokenChunks.add(currentChunk);
@@ -395,7 +324,7 @@ public class FullTextParser extends AbstractParser {
             LayoutTokenization layouts = featSeg.getRight();
             if (layouts != null)
                 layoutTokenization = layouts.getTokenization();
-            if ( (featuredText != null) && (featuredText.trim().length() > 0) ) {               
+            if ( (featuredText != null) && (featuredText.trim().length() > 0) ) {
                 res = label(featuredText);
             }
         }
@@ -437,7 +366,7 @@ public class FullTextParser extends AbstractParser {
         return result.toString();
     }
 
-	static public Pair<String, LayoutTokenization> getBodyTextFeatured(Document doc,
+    static public Pair<String, LayoutTokenization> getBodyTextFeatured(Document doc,
                                                                        SortedSet<DocumentPiece> documentBodyParts) {
 		if ((documentBodyParts == null) || (documentBodyParts.size() == 0)) {
 			return null;
