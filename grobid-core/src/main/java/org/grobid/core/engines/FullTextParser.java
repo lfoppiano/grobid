@@ -3,6 +3,7 @@ package org.grobid.core.engines;
 import com.google.common.collect.Iterables;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.io.FileUtils;
 
@@ -139,17 +140,18 @@ public class FullTextParser extends AbstractParser {
                 parsers.getHeaderParser().processingHeaderBlock(config.getConsolidateHeader(), doc, resHeader);
             }
             // above the old version of the header block identification, because more robust
-            if ((resHeader.getTitle() == null) || (resHeader.getTitle().trim().length() == 0) ||
-                 (resHeader.getAuthors() == null) || (resHeader.getFullAuthors() == null) ||
-                 (resHeader.getFullAuthors().size() == 0) ) {
+            if (isBlank(resHeader.getTitle()) || isBlank(resHeader.getAuthors()) || CollectionUtils.isEmpty(resHeader.getFullAuthors())) {
                 resHeader = new BiblioItem();
                 parsers.getHeaderParser().processingHeaderSection(config.getConsolidateHeader(), doc, resHeader);
                 // above, use the segmentation model result
                 if (doc.getMetadata() != null) {
                     Metadata metadata = doc.getMetadata();
-                    if (metadata.getTitle() != null && resHeader.getTitle() == null)
-                        resHeader.setTitle(metadata.getTitle());
-                    if (metadata.getAuthor() != null) {
+                    if (isNotBlank(metadata.getTitle()) && isBlank(resHeader.getTitle()))
+                        if(!endsWithAny(lowerCase(metadata.getTitle()), ".doc", ".pdf", ".tex", ".div", ".docx", ".odf", ".odt", ".txt"))
+                            resHeader.setTitle(metadata.getTitle());
+
+                    if (metadata.getAuthor() != null
+                        && (resHeader.getAuthors() == null || CollectionUtils.isEmpty(resHeader.getFullAuthors()))) {
                         resHeader.setAuthors(metadata.getAuthor());
                         resHeader.setOriginalAuthors(metadata.getAuthor());
                         List<Person> localAuthors = parsers.getAuthorParser().processingHeader(metadata.getAuthor());
@@ -292,7 +294,7 @@ public class FullTextParser extends AbstractParser {
 
     /**
      * Process a simple segment of layout tokens with the full text model.
-     * Return null if provided Layout Tokens is empty or if structuring failed. 
+     * Return null if provided Layout Tokens is empty or if structuring failed.
      */
     public Pair<String, List<LayoutToken>> processShortNew(List<LayoutToken> tokens, Document doc) {
         if (CollectionUtils.isEmpty(tokens))
@@ -309,10 +311,10 @@ public class FullTextParser extends AbstractParser {
                 posStartPiece = getDocIndexToken(doc, token);
                 startBlockPtr = token.getBlockPtr();
             } else if (token.getOffset() != currentOffset + previousToken.getText().length()) {
-                // new DocumentPiece to be added 
+                // new DocumentPiece to be added
                 DocumentPointer dp1 = new DocumentPointer(doc, startBlockPtr, posStartPiece);
-                DocumentPointer dp2 = new DocumentPointer(doc, 
-                    previousToken.getBlockPtr(), 
+                DocumentPointer dp2 = new DocumentPointer(doc,
+                    previousToken.getBlockPtr(),
                     getDocIndexToken(doc, previousToken));
                 DocumentPiece piece = new DocumentPiece(dp1, dp2);
                 documentParts.add(piece);
@@ -325,11 +327,11 @@ public class FullTextParser extends AbstractParser {
             previousToken = token;
         }
         // we still need to add the last document piece
-        // conditional below should always be true because abstract is not null if we reach this part, but paranoia is good when programming 
+        // conditional below should always be true because abstract is not null if we reach this part, but paranoia is good when programming
         if (posStartPiece != -1) {
             DocumentPointer dp1 = new DocumentPointer(doc, startBlockPtr, posStartPiece);
-            DocumentPointer dp2 = new DocumentPointer(doc, 
-                previousToken.getBlockPtr(), 
+            DocumentPointer dp2 = new DocumentPointer(doc,
+                previousToken.getBlockPtr(),
                 getDocIndexToken(doc, previousToken));
             DocumentPiece piece = new DocumentPiece(dp1, dp2);
             documentParts.add(piece);
@@ -397,13 +399,13 @@ public class FullTextParser extends AbstractParser {
                 res = label(featuredText);
             }
         }
-  
+
         return Pair.of(res, layoutTokenization);
     }
 
     static protected String postProcessLabeledAbstract(String labeledAbstract) {
-        if (labeledAbstract == null) 
-            return null;     
+        if (labeledAbstract == null)
+            return null;
         StringBuilder result = new StringBuilder();
 
         String[] lines = labeledAbstract.split("\n");
@@ -419,7 +421,7 @@ public class FullTextParser extends AbstractParser {
                     pieces[pieces.length-1] = "I-"+TaggingLabels.PARAGRAPH.getLabel();
                 } else {
                     pieces[pieces.length-1] = TaggingLabels.PARAGRAPH.getLabel();
-                } 
+                }
             } else if (label.equals(TaggingLabels.FIGURE.getLabel()) || label.equals(TaggingLabels.TABLE.getLabel())) {
                 pieces[pieces.length-1] = TaggingLabels.PARAGRAPH.getLabel();
             }
@@ -433,7 +435,7 @@ public class FullTextParser extends AbstractParser {
         }
 
         return result.toString();
-    } 
+    }
 
 	static public Pair<String, LayoutTokenization> getBodyTextFeatured(Document doc,
                                                                        SortedSet<DocumentPiece> documentBodyParts) {
@@ -513,7 +515,7 @@ public class FullTextParser extends AbstractParser {
 
 			//int blockPos = dp1.getBlockPtr();
 			for(int blockIndex = dp1.getBlockPtr(); blockIndex <= dp2.getBlockPtr(); blockIndex++) {
-//System.out.println("blockIndex: " + blockIndex);			
+//System.out.println("blockIndex: " + blockIndex);
                 boolean graphicVector = false;
 	    		boolean graphicBitmap = false;
             	Block block = blocks.get(blockIndex);
@@ -609,7 +611,7 @@ public class FullTextParser extends AbstractParser {
 	            while (n < lastPos) {
 					if (blockIndex == dp2.getBlockPtr()) {
 						//if (n > block.getEndToken()) {
-//System.out.println("n: " + n + " / dp2.getTokenDocPos() - block.getStartToken() " + (dp2.getTokenDocPos() - block.getStartToken())); 
+//System.out.println("n: " + n + " / dp2.getTokenDocPos() - block.getStartToken() " + (dp2.getTokenDocPos() - block.getStartToken()));
 						if (n > dp2.getTokenDocPos() - block.getStartToken()) {
 							break;
 						}
