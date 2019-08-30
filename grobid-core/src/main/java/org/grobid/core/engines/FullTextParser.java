@@ -42,6 +42,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
@@ -96,8 +97,8 @@ public class FullTextParser extends AbstractParser {
 
 	public Document processing(File inputPdf,
 							   GrobidAnalysisConfig config) throws Exception {
-		DocumentSource documentSource = 
-			DocumentSource.fromPdf(inputPdf, config.getStartPage(), config.getEndPage(), 
+		DocumentSource documentSource =
+			DocumentSource.fromPdf(inputPdf, config.getStartPage(), config.getEndPage(),
 				config.getPdfAssetPath() != null, true, false);
 		return processing(documentSource, config);
 	}
@@ -138,21 +139,7 @@ public class FullTextParser extends AbstractParser {
                     Metadata metadata = doc.getMetadata();
                     if (isNotBlank(metadata.getTitle()) && isBlank(resHeader.getTitle())) {
                         if (!endsWithAny(lowerCase(metadata.getTitle()), ".doc", ".pdf", ".tex", ".dvi", ".docx", ".odf", ".odt", ".txt")) {
-
-//                            StringBuilder accumulated = new StringBuilder();
-//                            for (int i = 0; i < 2; i++) {
-//                                for (Block block : doc.getPage(i).getBlocks()) {
-//                                    String localText = block.getText();
-//
-//                                    String string = localText.toLowerCase();
-//                                    string = Normalizer.normalize(string, Normalizer.Form.NFD);
-//                                    string = string.replaceAll("[^\\p{ASCII}]", "");
-//                                    string = pattern.matcher(string).replaceAll("");
-//                                    accumulated.append(string);
-//                                }
-//                            }
-
-//                            if (StringUtils.isNotBlank(FuzzySubstringSearch.fuzzySubstringSearch(metadata.getTitle(), accumulated.toString(), 10 ))) {
+//                            if (isSoftMatchingInFirstTwoPages(metadata.getTitle(), doc)) {
                                 resHeader.setTitle(metadata.getTitle());
 //                            }
                         }
@@ -304,6 +291,27 @@ public class FullTextParser extends AbstractParser {
 		} catch (Exception e) {
             throw new GrobidException("An exception occurred while running Grobid.", e);
         }
+    }
+
+    /**
+     * Perform a soft matching of the input string in the first two pages of the document
+     */
+    private boolean isSoftMatchingInFirstTwoPages(String title, Document doc) {
+        StringBuilder accumulated = new StringBuilder();
+        for (int i = 0; i < 2; i++) {
+            for (Block block : doc.getPage(i).getBlocks()) {
+                String localText = block.getText();
+
+                String string = localText.toLowerCase();
+                string = Normalizer.normalize(string, Normalizer.Form.NFD);
+                string = string.replaceAll("[^\\p{ASCII}]", "");
+                string = pattern.matcher(string).replaceAll("");
+                accumulated.append(string);
+            }
+        }
+
+        // https://gist.github.com/shathor/8ad04d8923d6c07fd2f4a06e9543bebf, unfortunately is GPL, so cannot really be used here.
+        return false; //StringUtils.isNotBlank(FuzzySubstringSearch.fuzzySubstringSearch(title, accumulated.toString(), 10 ));
     }
 
     protected SortedSet<DocumentPiece> collectPiecesFromLayoutTokens(List<LayoutToken> tokensList, Document doc) {
