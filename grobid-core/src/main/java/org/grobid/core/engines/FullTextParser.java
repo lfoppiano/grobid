@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -120,21 +121,7 @@ public class FullTextParser extends AbstractParser {
                     Metadata metadata = doc.getMetadata();
                     if (isNotBlank(metadata.getTitle()) && isBlank(resHeader.getTitle())) {
                         if (!endsWithAny(lowerCase(metadata.getTitle()), ".doc", ".pdf", ".tex", ".dvi", ".docx", ".odf", ".odt", ".txt")) {
-
-//                            StringBuilder accumulated = new StringBuilder();
-//                            for (int i = 0; i < 2; i++) {
-//                                for (Block block : doc.getPage(i).getBlocks()) {
-//                                    String localText = block.getText();
-//
-//                                    String string = localText.toLowerCase();
-//                                    string = Normalizer.normalize(string, Normalizer.Form.NFD);
-//                                    string = string.replaceAll("[^\\p{ASCII}]", "");
-//                                    string = pattern.matcher(string).replaceAll("");
-//                                    accumulated.append(string);
-//                                }
-//                            }
-
-//                            if (StringUtils.isNotBlank(FuzzySubstringSearch.fuzzySubstringSearch(metadata.getTitle(), accumulated.toString(), 10 ))) {
+//                            if (isSoftMatchingInFirstTwoPages(metadata.getTitle(), doc)) {
                                 resHeader.setTitle(metadata.getTitle());
 //                            }
                         }
@@ -304,6 +291,120 @@ public class FullTextParser extends AbstractParser {
             throw new GrobidException("An exception occurred while running Grobid.", e);
         }
     }
+
+    /**
+     * Perform a soft matching of the input string in the first two pages of the document
+     */
+    private boolean isSoftMatchingInFirstTwoPages(String title, Document doc) {
+        StringBuilder accumulated = new StringBuilder();
+        for (int i = 0; i < 2; i++) {
+            for (Block block : doc.getPage(i).getBlocks()) {
+                String localText = block.getText();
+
+                String string = localText.toLowerCase();
+                string = Normalizer.normalize(string, Normalizer.Form.NFD);
+                string = string.replaceAll("[^\\p{ASCII}]", "");
+                string = pattern.matcher(string).replaceAll("");
+                accumulated.append(string);
+            }
+        }
+
+        // https://gist.github.com/shathor/8ad04d8923d6c07fd2f4a06e9543bebf, unfortunately is GPL, so cannot really be used here.
+        return false; //StringUtils.isNotBlank(FuzzySubstringSearch.fuzzySubstringSearch(title, accumulated.toString(), 10 ));
+    }
+
+    protected SortedSet<DocumentPiece> collectPiecesFromLayoutTokens(List<LayoutToken> tokensList, Document doc) {
+        SortedSet<DocumentPiece> documentParts = new TreeSet<>();
+        // identify continuous sequence of layout tokens in the token list
+        int positionStartPiece = -1;
+        int currentOffset = -1;
+        int startBlockPtr = -1;
+        LayoutToken previousAbstractToken = null;
+        for (LayoutToken currentToken : tokensList) {
+            if (currentOffset == -1) {
+                positionStartPiece = getDocIndexToken(doc, currentToken);
+                startBlockPtr = currentToken.getBlockPtr();
+            } else {
+                if (currentToken.getOffset() != currentOffset + previousAbstractToken.getText().length()) {
+                    // new DocumentPiece to be added
+                    DocumentPointer dp1 = new DocumentPointer(doc, startBlockPtr, positionStartPiece);
+                    DocumentPointer dp2 = new DocumentPointer(doc,
+                        previousAbstractToken.getBlockPtr(),
+                        getDocIndexToken(doc, previousAbstractToken));
+                    DocumentPiece piece = new DocumentPiece(dp1, dp2);
+                    documentParts.add(piece);
+
+                    // set index for the next DocumentPiece
+                    positionStartPiece = getDocIndexToken(doc, currentToken);
+                    startBlockPtr = currentToken.getBlockPtr();
+                }
+            }
+            currentOffset = currentToken.getOffset();
+            previousAbstractToken = currentToken;
+        }
+        // we still need to add the last document piece
+        // conditional below should always be true because abstract is not null if we reach this part, but paranoia is good when programming
+        if (positionStartPiece != -1) {
+            DocumentPointer dp1 = new DocumentPointer(doc, startBlockPtr, positionStartPiece);
+            DocumentPointer dp2 = new DocumentPointer(doc,
+                previousAbstractToken.getBlockPtr(),
+                getDocIndexToken(doc, previousAbstractToken));
+            DocumentPiece piece = new DocumentPiece(dp1, dp2);
+            documentParts.add(piece);
+        }
+        return documentParts;
+    }
+
+    /**
+     * Process a simple segment of layout tokens with the full text model
+     */
+    public Pair<String, List<LayoutToken>> processShort2(List<LayoutToken> tokens, Document doc) {
+        SortedSet<DocumentPiece> documentParts = new TreeSet<>();
+
+        documentParts.addAll(collectPiecesFromLayoutTokens(tokens, doc));
+
+        Pair<String, LayoutTokenization> featSeg = getBodyTextFeatured(doc, documentParts);
+        String res = "";
+        List<LayoutToken> layoutTokenization = new ArrayList<>();
+        if (featSeg != null) {
+            String featuredText = featSeg.getLeft();
+            LayoutTokenization layouts = featSeg.getRight();
+            if (layouts != null)
+                layoutTokenization = layouts.getTokenization();
+            if (isNotBlank(featuredText)) {
+                res = label(featuredText);
+            }
+        }
+        return Pair.of(res, layoutTokenization);
+    }
+
+    /**
+     * Process a simple segment of layout tokens with the full text model.
+     * Return null if provided Layout Tokens is empty or if structuring failed.
+     */
+    public Pair<String, List<LayoutToken>> processShortNew(List<LayoutToken> tokens, Document doc) {
+        if (CollectionUtils.isEmpty(tokens))
+            return null;
+
+        SortedSet<DocumentPiece> documentParts = collectPiecesFromLayoutTokens(tokens, doc);
+
+        Pair<String, LayoutTokenization> featSeg = getBodyTextFeatured(doc, documentParts);
+        String res = "";
+        List<LayoutToken> layoutTokenization = new ArrayList<>();
+        if (featSeg != null) {
+            String featuredText = featSeg.getLeft();
+            LayoutTokenization layouts = featSeg.getRight();
+            if (layouts != null)
+                layoutTokenization = layouts.getTokenization();
+            if (isNotBlank(featuredText)) {
+                res = label(featuredText);
+            }
+        }  else
+            return null;
+
+        return Pair.of(res, layoutTokenization);
+    }
+
 
     public Pair<String, List<LayoutToken>> processShort(List<LayoutToken> tokens, Document doc) {
         if (CollectionUtils.isEmpty(tokens))
