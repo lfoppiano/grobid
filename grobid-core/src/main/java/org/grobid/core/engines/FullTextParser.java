@@ -33,6 +33,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.apache.commons.lang3.StringUtils.*;
 
@@ -63,6 +64,8 @@ public class FullTextParser extends AbstractParser {
 	private static final int LINESCALE = 10;
 
     private EngineParsers parsers;
+
+    private Pattern pattern = Pattern.compile("[^a-zA-Z0-9]+");
 
     /**
      * TODO some documentation...
@@ -115,9 +118,27 @@ public class FullTextParser extends AbstractParser {
                 // above, use the segmentation model result
                 if (doc.getMetadata() != null) {
                     Metadata metadata = doc.getMetadata();
-                    if (isNotBlank(metadata.getTitle()) && isBlank(resHeader.getTitle()))
-                        if(!endsWithAny(lowerCase(metadata.getTitle()), ".doc", ".pdf", ".tex", ".div", ".docx", ".odf", ".odt", ".txt"))
-                            resHeader.setTitle(metadata.getTitle());
+                    if (isNotBlank(metadata.getTitle()) && isBlank(resHeader.getTitle())) {
+                        if (!endsWithAny(lowerCase(metadata.getTitle()), ".doc", ".pdf", ".tex", ".dvi", ".docx", ".odf", ".odt", ".txt")) {
+
+//                            StringBuilder accumulated = new StringBuilder();
+//                            for (int i = 0; i < 2; i++) {
+//                                for (Block block : doc.getPage(i).getBlocks()) {
+//                                    String localText = block.getText();
+//
+//                                    String string = localText.toLowerCase();
+//                                    string = Normalizer.normalize(string, Normalizer.Form.NFD);
+//                                    string = string.replaceAll("[^\\p{ASCII}]", "");
+//                                    string = pattern.matcher(string).replaceAll("");
+//                                    accumulated.append(string);
+//                                }
+//                            }
+
+//                            if (StringUtils.isNotBlank(FuzzySubstringSearch.fuzzySubstringSearch(metadata.getTitle(), accumulated.toString(), 10 ))) {
+                                resHeader.setTitle(metadata.getTitle());
+//                            }
+                        }
+                    }
 
                     if (metadata.getAuthor() != null
                         && (resHeader.getAuthors() == null || CollectionUtils.isEmpty(resHeader.getFullAuthors()))) {
