@@ -1,7 +1,6 @@
 package org.grobid.core.utilities;
 
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Iterables;
 import org.grobid.core.analyzers.GrobidAnalyzer;
 import org.grobid.core.layout.LayoutToken;
 import org.junit.Test;
