@@ -356,29 +356,6 @@ public class FullTextParser extends AbstractParser {
     }
 
     /**
-     * Process a simple segment of layout tokens with the full text model
-     */
-    public Pair<String, List<LayoutToken>> processShort2(List<LayoutToken> tokens, Document doc) {
-        SortedSet<DocumentPiece> documentParts = new TreeSet<>();
-
-        documentParts.addAll(collectPiecesFromLayoutTokens(tokens, doc));
-
-        Pair<String, LayoutTokenization> featSeg = getBodyTextFeatured(doc, documentParts);
-        String res = "";
-        List<LayoutToken> layoutTokenization = new ArrayList<>();
-        if (featSeg != null) {
-            String featuredText = featSeg.getLeft();
-            LayoutTokenization layouts = featSeg.getRight();
-            if (layouts != null)
-                layoutTokenization = layouts.getTokenization();
-            if (isNotBlank(featuredText)) {
-                res = label(featuredText);
-            }
-        }
-        return Pair.of(res, layoutTokenization);
-    }
-
-    /**
      * Process a simple segment of layout tokens with the full text model.
      * Return null if provided Layout Tokens is empty or if structuring failed.
      */
