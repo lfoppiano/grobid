@@ -2,9 +2,7 @@ package org.grobid.core.engines;
 
 import com.google.common.collect.Iterables;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.grobid.core.GrobidModels;
 import org.grobid.core.data.*;
@@ -35,22 +33,6 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.util.*;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-
-import java.nio.charset.StandardCharsets;
-import java.text.Normalizer;
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.SortedSet;
-import java.util.StringTokenizer;
-import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -356,70 +338,6 @@ public class FullTextParser extends AbstractParser {
         return documentParts;
     }
 
-    /**
-     * Process a simple segment of layout tokens with the full text model
-     */
-    public Pair<String, List<LayoutToken>> processShort2(List<LayoutToken> tokens, Document doc) {
-        SortedSet<DocumentPiece> documentParts = new TreeSet<>();
-
-        documentParts.addAll(collectPiecesFromLayoutTokens(tokens, doc));
-
-        Pair<String, LayoutTokenization> featSeg = getBodyTextFeatured(doc, documentParts);
-        String res = "";
-        List<LayoutToken> layoutTokenization = new ArrayList<>();
-        if (featSeg != null) {
-            String featuredText = featSeg.getLeft();
-            LayoutTokenization layouts = featSeg.getRight();
-            if (layouts != null)
-                layoutTokenization = layouts.getTokenization();
-            if (isNotBlank(featuredText)) {
-                res = label(featuredText);
-            }
-        }
-        return Pair.of(res, layoutTokenization);
-    }
-
-    protected SortedSet<DocumentPiece> collectPiecesFromLayoutTokens(List<LayoutToken> tokensList, Document doc) {
-        SortedSet<DocumentPiece> documentParts = new TreeSet<>();
-        // identify continuous sequence of layout tokens in the token list
-        int positionStartPiece = -1;
-        int currentOffset = -1;
-        int startBlockPtr = -1;
-        LayoutToken previousAbstractToken = null;
-        for (LayoutToken currentToken : tokensList) {
-            if (currentOffset == -1) {
-                positionStartPiece = getDocIndexToken(doc, currentToken);
-                startBlockPtr = currentToken.getBlockPtr();
-            } else {
-                if (currentToken.getOffset() != currentOffset + previousAbstractToken.getText().length()) {
-                    // new DocumentPiece to be added
-                    DocumentPointer dp1 = new DocumentPointer(doc, startBlockPtr, positionStartPiece);
-                    DocumentPointer dp2 = new DocumentPointer(doc,
-                        previousAbstractToken.getBlockPtr(),
-                        getDocIndexToken(doc, previousAbstractToken));
-                    DocumentPiece piece = new DocumentPiece(dp1, dp2);
-                    documentParts.add(piece);
-
-                    // set index for the next DocumentPiece
-                    positionStartPiece = getDocIndexToken(doc, currentToken);
-                    startBlockPtr = currentToken.getBlockPtr();
-                }
-            }
-            currentOffset = currentToken.getOffset();
-            previousAbstractToken = currentToken;
-        }
-        // we still need to add the last document piece
-        // conditional below should always be true because abstract is not null if we reach this part, but paranoia is good when programming
-        if (positionStartPiece != -1) {
-            DocumentPointer dp1 = new DocumentPointer(doc, startBlockPtr, positionStartPiece);
-            DocumentPointer dp2 = new DocumentPointer(doc,
-                previousAbstractToken.getBlockPtr(),
-                getDocIndexToken(doc, previousAbstractToken));
-            DocumentPiece piece = new DocumentPiece(dp1, dp2);
-            documentParts.add(piece);
-        }
-        return documentParts;
-    }
 
     /**
      * Process a simple segment of layout tokens with the full text model.
