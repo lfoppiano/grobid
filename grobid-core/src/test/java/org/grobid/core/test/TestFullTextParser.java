@@ -1,9 +1,12 @@
 package org.grobid.core.test;
 
 import org.apache.commons.io.FileUtils;
+import org.easymock.Mock;
+import org.grobid.core.analyzers.GrobidAnalyzer;
 import org.grobid.core.document.Document;
 import org.grobid.core.document.DocumentPiece;
 import org.grobid.core.document.DocumentPointer;
+import org.grobid.core.document.DocumentSource;
 import org.grobid.core.document.xml.XmlBuilderUtils;
 import org.grobid.core.engines.Engine;
 import org.grobid.core.engines.label.SegmentationLabels;
@@ -11,18 +14,22 @@ import org.grobid.core.engines.config.GrobidAnalysisConfig;
 import org.grobid.core.engines.label.TaggingLabel;
 import org.grobid.core.factory.GrobidFactory;
 import org.grobid.core.layout.Block;
+import org.grobid.core.layout.LayoutToken;
 import org.grobid.core.utilities.GrobidProperties;
 import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.SortedSet;
+import java.util.stream.Collectors;
 
 import nu.xom.Element;
 
+import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -38,21 +45,21 @@ public class TestFullTextParser extends EngineTest {
     }
 
     @AfterClass
-    public static void tearDown(){
+    public static void tearDown() {
         GrobidFactory.reset();
     }
 
     @Test
     public void testFullTextParser_1() throws Exception {
         File inputTmpFile = getInputDocument("/test/Wang-paperAVE2008.pdf");
-        
+
         Document tei = engine.fullTextToTEIDoc(inputTmpFile, GrobidAnalysisConfig.defaultInstance());
         assertTei(tei);
     }
 
     private File getInputDocument(String inputPath) throws IOException {
         InputStream is = this.getClass().getResourceAsStream(inputPath);
-        File inputTmpFile  = File.createTempFile("tmpFileTest", "testFullTextParser");
+        File inputTmpFile = File.createTempFile("tmpFileTest", "testFullTextParser");
         inputTmpFile.deleteOnExit();
 
         FileUtils.copyToFile(is, inputTmpFile);

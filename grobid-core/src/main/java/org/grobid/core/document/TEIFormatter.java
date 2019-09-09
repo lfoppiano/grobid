@@ -988,7 +988,7 @@ public class TEIFormatter {
                                     StringBuilder tei,
                                     Document doc,
                                     GrobidAnalysisConfig config) throws Exception {
-        List<String> allNotes = new ArrayList<String>();
+        List<String> allNotes = new ArrayList<>();
         for (DocumentPiece docPiece : documentNoteParts) {
             
             List<LayoutToken> noteTokens = doc.getDocumentPieceTokenization(docPiece);
@@ -1439,6 +1439,7 @@ public class TEIFormatter {
             if (bds.size() > 0) {
                 for (BibDataSet bib : bds) {
                     BiblioItem bit = bib.getResBib();
+                    bit.setReference(bib.getRawBib());
                     if (bit != null) {
                         tei.append("\n" + bit.toTEI(p, 0, config));
                     } else {
