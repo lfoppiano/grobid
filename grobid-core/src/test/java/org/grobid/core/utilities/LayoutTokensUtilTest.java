@@ -5,6 +5,7 @@ import org.grobid.core.analyzers.GrobidAnalyzer;
 import org.grobid.core.layout.LayoutToken;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -13,6 +14,20 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 
 public class LayoutTokensUtilTest {
+
+    @Test
+    public void testSubList1() throws Exception {
+        String text = "Specific-Heat Study of Superconducting and Normal States in FeSe 1-x Te x (0.6 ≤ x ≤ 1) Single Crystals: Strong-Coupling Superconductivity, Strong Electron-Correlation, and Inhomogeneity ";
+
+        List<LayoutToken> layoutTokens = GrobidAnalyzer.getInstance().tokenizeWithLayoutToken(text);
+
+        layoutTokens.stream().forEach(l -> {
+            l.setOffset(l.getOffset() + 4);
+        });
+
+        List<LayoutToken> result = LayoutTokensUtil.subListByOffset(layoutTokens, 64, 73);
+        assertThat(LayoutTokensUtil.toText(result), is("FeSe 1-x "));
+    }
 
 
     @Test
@@ -48,6 +63,7 @@ public class LayoutTokensUtilTest {
         assertThat(Iterables.getLast(result).getText(), is("!"));
 
     }
+
     /**
      * We fake the new line in the layout token coordinates
      */
