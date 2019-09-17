@@ -145,7 +145,6 @@ public class FullTextParser extends AbstractParser {
             }
 
             // structure the abstract using the fulltext model
-
             if (isNotBlank(resHeader.getAbstract())) {
                 List<LayoutToken> abstractTokens = resHeader.getLayoutTokens(TaggingLabels.HEADER_ABSTRACT);
                 if (CollectionUtils.isNotEmpty(abstractTokens)) {
@@ -160,28 +159,6 @@ public class FullTextParser extends AbstractParser {
                     }
                 }
             }
-
-            // structure the abstract using the fulltext model
-            /*if ( (resHeader.getAbstract() != null) && (resHeader.getAbstract().length() > 0) ) {
-                List<LayoutToken> abstractTokens = resHeader.getLayoutTokens(TaggingLabels.HEADER_ABSTRACT);
-                if ( (abstractTokens != null) && (abstractTokens.size()>0) ) {
-                    SortedSet<DocumentPiece> documentParts = getDocumentPieces2(abstractTokens, doc);
-
-                    featSeg = getBodyTextFeatured(doc, documentParts);
-                    String rese2 = null;
-                    List<LayoutToken> tokenizationsAbstract = null;
-                    if (featSeg != null) {
-                        // if featSeg is null, it usually means that no body segment is found in the
-                        // document segmentation
-                        String abstractText = featSeg.getLeft();
-                        tokenizationsAbstract = featSeg.getRight().getTokenization();
-                        if (isNotEmpty(trim(abstractText)))
-                            rese2 = label(abstractText);
-                        resHeader.setLabeledAbstract(rese2);
-                        resHeader.setLayoutTokensForLabel(tokenizationsAbstract, TaggingLabels.HEADER_ABSTRACT);
-                    }
-                }
-            }*/
 
             // citation processing
             // consolidation, if selected, is not done individually for each citation but 
@@ -312,76 +289,6 @@ public class FullTextParser extends AbstractParser {
         // https://gist.github.com/shathor/8ad04d8923d6c07fd2f4a06e9543bebf, unfortunately is GPL, so cannot really be used here.
         return false; //StringUtils.isNotBlank(FuzzySubstringSearch.fuzzySubstringSearch(title, accumulated.toString(), 10 ));
     }
-
-    protected SortedSet<DocumentPiece> collectPiecesFromLayoutTokens(List<LayoutToken> tokensList, Document doc) {
-        SortedSet<DocumentPiece> documentParts = new TreeSet<>();
-        // identify continuous sequence of layout tokens in the token list
-        int positionStartPiece = -1;
-        int currentOffset = -1;
-        int startBlockPtr = -1;
-        LayoutToken previousAbstractToken = null;
-        for (LayoutToken currentToken : tokensList) {
-            if (currentOffset == -1) {
-                positionStartPiece = getDocIndexToken(doc, currentToken);
-                startBlockPtr = currentToken.getBlockPtr();
-            } else {
-                if (currentToken.getOffset() != currentOffset + previousAbstractToken.getText().length()) {
-                    // new DocumentPiece to be added
-                    DocumentPointer dp1 = new DocumentPointer(doc, startBlockPtr, positionStartPiece);
-                    DocumentPointer dp2 = new DocumentPointer(doc,
-                        previousAbstractToken.getBlockPtr(),
-                        getDocIndexToken(doc, previousAbstractToken));
-                    DocumentPiece piece = new DocumentPiece(dp1, dp2);
-                    documentParts.add(piece);
-
-                    // set index for the next DocumentPiece
-                    positionStartPiece = getDocIndexToken(doc, currentToken);
-                    startBlockPtr = currentToken.getBlockPtr();
-                }
-            }
-            currentOffset = currentToken.getOffset();
-            previousAbstractToken = currentToken;
-        }
-        // we still need to add the last document piece
-        // conditional below should always be true because abstract is not null if we reach this part, but paranoia is good when programming
-        if (positionStartPiece != -1) {
-            DocumentPointer dp1 = new DocumentPointer(doc, startBlockPtr, positionStartPiece);
-            DocumentPointer dp2 = new DocumentPointer(doc,
-                previousAbstractToken.getBlockPtr(),
-                getDocIndexToken(doc, previousAbstractToken));
-            DocumentPiece piece = new DocumentPiece(dp1, dp2);
-            documentParts.add(piece);
-        }
-        return documentParts;
-    }
-
-    /**
-     * Process a simple segment of layout tokens with the full text model.
-     * Return null if provided Layout Tokens is empty or if structuring failed.
-     */
-    public Pair<String, List<LayoutToken>> processShortNew(List<LayoutToken> tokens, Document doc) {
-        if (CollectionUtils.isEmpty(tokens))
-            return null;
-
-        SortedSet<DocumentPiece> documentParts = collectPiecesFromLayoutTokens(tokens, doc);
-
-        Pair<String, LayoutTokenization> featSeg = getBodyTextFeatured(doc, documentParts);
-        String res = "";
-        List<LayoutToken> layoutTokenization = new ArrayList<>();
-        if (featSeg != null) {
-            String featuredText = featSeg.getLeft();
-            LayoutTokenization layouts = featSeg.getRight();
-            if (layouts != null)
-                layoutTokenization = layouts.getTokenization();
-            if (isNotBlank(featuredText)) {
-                res = label(featuredText);
-            }
-        }  else
-            return null;
-
-        return Pair.of(res, layoutTokenization);
-    }
-
 
     public Pair<String, List<LayoutToken>> processShort(List<LayoutToken> tokens, Document doc) {
         if (CollectionUtils.isEmpty(tokens))
