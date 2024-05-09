@@ -51,8 +51,8 @@ jobs:
         id: docker_build
         uses: mr-smithers-excellent/docker-build-push@v6
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME_LFOPPIANO }}
-          password: ${{ secrets.DOCKERHUB_TOKEN_LFOPPIANO }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
           image: lfoppiano/grobid
           registry: docker.io
           pushImage: ${{ github.event_name != 'pull_request' }}
