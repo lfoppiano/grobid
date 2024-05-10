@@ -1777,7 +1777,7 @@ public class TEIFormatter {
             lastClusterLabel = cluster.getTaggingLabel();
         }
 
-        // in case we segment paragraph into sentences, we still need to do it for the last paragraph 
+        // in case we segment paragraph into sentences, we still need to do it for the last paragraph
         if (curParagraph != null && config.isWithSentenceSegmentation()) {
             segmentIntoSentences(curParagraph, curParagraphTokens, config, doc.getLanguage(), doc.getPDFAnnotations());
         }
