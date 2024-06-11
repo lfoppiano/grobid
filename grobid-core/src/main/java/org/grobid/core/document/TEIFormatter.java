@@ -1948,7 +1948,8 @@ public class TEIFormatter {
                             currentSentenceTokens = new ArrayList<>();
                             break;
                         }
-                        sentenceChunk = text.substring(theSentences.get(currentSentenceIndex).start, theSentences.get(currentSentenceIndex).end);
+                        int endPosition = Math.min(theSentences.get(currentSentenceIndex).end, text.length());
+                        sentenceChunk = text.substring(theSentences.get(currentSentenceIndex).start, endPosition);
                     }
                     currentSentenceTokens = new ArrayList<>();
                     currentSentenceTokens.add(token);
