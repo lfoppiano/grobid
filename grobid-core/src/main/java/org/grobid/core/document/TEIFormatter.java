@@ -1282,7 +1282,7 @@ public class TEIFormatter {
             String labeledNote = noteProcess.getLeft();
             List<LayoutToken> noteLayoutTokens = noteProcess.getRight();
 
-            if ( (labeledNote != null) && (labeledNote.length() > 0) ) {
+            if (StringUtils.isNotBlank(labeledNote)) {
                 TaggingTokenClusteror clusteror = new TaggingTokenClusteror(GrobidModels.FULLTEXT, labeledNote, noteLayoutTokens);
                 List<TaggingTokenCluster> clusters = clusteror.cluster();
                 
