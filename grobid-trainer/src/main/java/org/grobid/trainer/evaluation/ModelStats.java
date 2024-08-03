@@ -123,7 +123,7 @@ public class ModelStats {
         report.append("\n===== Field-level results =====\n");
         report.append(String.format("\n%-20s %-12s %-12s %-12s %-12s %-7s\n\n",
             "label",
-            "accuracy",
+//            "accuracy",
             "precision",
             "recall",
             "f1",
@@ -136,17 +136,17 @@ public class ModelStats {
 
         report.append("\n");
 
-        report.append(String.format("%-20s %-12s %-12s %-12s %-12s %-7s\n",
+        report.append(String.format("%-20s %-12s %-12s %-12s %-7s\n",
             "all (micro avg.)",
-            TextUtilities.formatTwoDecimals(fieldStats.getMicroAverageAccuracy() * 100),
+//            TextUtilities.formatTwoDecimals(fieldStats.getMicroAverageAccuracy() * 100),
             TextUtilities.formatTwoDecimals(fieldStats.getMicroAveragePrecision() * 100),
             TextUtilities.formatTwoDecimals(fieldStats.getMicroAverageRecall() * 100),
             TextUtilities.formatTwoDecimals(fieldStats.getMicroAverageF1() * 100),
             String.valueOf(getSupportSum())));
 
-        report.append(String.format("%-20s %-12s %-12s %-12s %-12s %-7s\n",
+        report.append(String.format("%-20s %-12s %-12s %-12s %-7s\n",
             "all (macro avg.)",
-            TextUtilities.formatTwoDecimals(fieldStats.getMacroAverageAccuracy() * 100),
+//            TextUtilities.formatTwoDecimals(fieldStats.getMacroAverageAccuracy() * 100),
             TextUtilities.formatTwoDecimals(fieldStats.getMacroAveragePrecision() * 100),
             TextUtilities.formatTwoDecimals(fieldStats.getMacroAverageRecall() * 100),
             TextUtilities.formatTwoDecimals(fieldStats.getMacroAverageF1() * 100),

@@ -175,7 +175,7 @@ public final class Stats {
 
                 cumulated_expected += expected;
                 cumulated_f1 += labelStat.getF1Score();
-                cumulated_accuracy += labelStat.getAccuracy();
+//                cumulated_accuracy += labelStat.getAccuracy();
                 cumulated_precision += labelStat.getPrecision();
                 cumulated_recall += labelStat.getRecall();
             }
@@ -196,7 +196,7 @@ public final class Stats {
 
             LabelStat labelStat = getLabelStat(label);
             LabelResult labelResult = new LabelResult(label);
-            labelResult.setAccuracy(labelStat.getAccuracy());
+//            labelResult.setAccuracy(labelStat.getAccuracy());
             labelResult.setPrecision(labelStat.getPrecision());
             labelResult.setRecall(labelStat.getRecall());
             labelResult.setF1Score(labelStat.getF1Score());
@@ -209,7 +209,8 @@ public final class Stats {
     }
 
 
-    public double getMicroAverageAccuracy() {
+    @Deprecated
+    public double getMacroAverageAccuracy() {
         computeMetrics();
 
         // macro average over measures
@@ -219,7 +220,8 @@ public final class Stats {
             return Math.min(1.0, cumulated_accuracy / totalValidFields);
     }
 
-    public double getMacroAverageAccuracy() {
+    @Deprecated
+    public double getMicroAverageAccuracy() {
         computeMetrics();
 
         double accuracy = 0.0;
@@ -297,9 +299,9 @@ public final class Stats {
         computeMetrics();
 
         StringBuilder report = new StringBuilder();
-        report.append(String.format("\n%-20s %-12s %-12s %-12s %-12s %-7s\n\n",
+        report.append(String.format("\n%-20s %-12s %-12s %-12s %-7s\n\n",
             "label",
-            "accuracy",
+//            "accuracy",
             "precision",
             "recall",
             "f1",
@@ -315,9 +317,9 @@ public final class Stats {
             LabelStat labelStat = getLabelStat(label);
 
             long support = labelStat.getSupport();
-            report.append(String.format("%-20s %-12s %-12s %-12s %-12s %-7s\n",
+            report.append(String.format("%-20s %-12s %-12s %-12s %-7s\n",
                 label,
-                TextUtilities.formatTwoDecimals(labelStat.getAccuracy() * 100),
+//                TextUtilities.formatTwoDecimals(labelStat.getAccuracy() * 100),
                 TextUtilities.formatTwoDecimals(labelStat.getPrecision() * 100),
                 TextUtilities.formatTwoDecimals(labelStat.getRecall() * 100),
                 TextUtilities.formatTwoDecimals(labelStat.getF1Score() * 100),
@@ -329,17 +331,17 @@ public final class Stats {
 
         report.append("\n");
 
-        report.append(String.format("%-20s %-12s %-12s %-12s %-12s %-7s\n",
+        report.append(String.format("%-20s %-12s %-12s %-12s %-7s\n",
             "all (micro avg.)",
-            TextUtilities.formatTwoDecimals(getMicroAverageAccuracy() * 100),
+//            TextUtilities.formatTwoDecimals(getMicroAverageAccuracy() * 100),
             TextUtilities.formatTwoDecimals(getMicroAveragePrecision() * 100),
             TextUtilities.formatTwoDecimals(getMicroAverageRecall() * 100),
             TextUtilities.formatTwoDecimals(getMicroAverageF1() * 100),
             String.valueOf(supportSum)));
 
-        report.append(String.format("%-20s %-12s %-12s %-12s %-12s %-7s\n",
+        report.append(String.format("%-20s %-12s %-12s %-12s %-7s\n",
             "all (macro avg.)",
-            TextUtilities.formatTwoDecimals(getMacroAverageAccuracy() * 100),
+//            TextUtilities.formatTwoDecimals(getMacroAverageAccuracy() * 100),
             TextUtilities.formatTwoDecimals(getMacroAveragePrecision() * 100),
             TextUtilities.formatTwoDecimals(getMacroAverageRecall() * 100),
             TextUtilities.formatTwoDecimals(getMacroAverageF1() * 100),

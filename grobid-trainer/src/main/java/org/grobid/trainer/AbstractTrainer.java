@@ -325,9 +325,9 @@ public abstract class AbstractTrainer implements Trainer {
             }
         }
 
-        sb.append(String.format("\n%-20s %-12s %-12s %-12s %-12s %-7s\n\n",
+        sb.append(String.format("\n%-20s %-12s %-12s %-12s %-7s\n\n",
             "label",
-            "accuracy",
+//            "accuracy",
             "precision",
             "recall",
             "f1",
@@ -354,11 +354,11 @@ public abstract class AbstractTrainer implements Trainer {
         OptionalDouble averageF1 = evaluationResults.stream().mapToDouble(e -> e.getFieldStats().getMicroAverageF1()).average();
         OptionalDouble averagePrecision = evaluationResults.stream().mapToDouble(e -> e.getFieldStats().getMicroAveragePrecision()).average();
         OptionalDouble averageRecall = evaluationResults.stream().mapToDouble(e -> e.getFieldStats().getMicroAverageRecall()).average();
-        OptionalDouble averageAccuracy = evaluationResults.stream().mapToDouble(e -> e.getFieldStats().getMicroAverageAccuracy()).average();
+//        OptionalDouble averageAccuracy = evaluationResults.stream().mapToDouble(e -> e.getFieldStats().getMicroAverageAccuracy()).average();
 
-        double avgAccuracy = averageAccuracy.orElseGet(() -> {
-            throw new GrobidException("Missing average accuracy. Something went wrong. Please check. ");
-        });
+//        double avgAccuracy = averageAccuracy.orElseGet(() -> {
+//            throw new GrobidException("Missing average accuracy. Something went wrong. Please check. ");
+//        });
 
         double avgF1 = averageF1.orElseGet(() -> {
             throw new GrobidException("Missing average F1. Something went wrong. Please check. ");
@@ -374,9 +374,9 @@ public abstract class AbstractTrainer implements Trainer {
 
         sb.append("\n");
 
-        sb.append(String.format("%-20s %-12s %-12s %-12s %-7s\n",
+        sb.append(String.format("%-20s %-12s %-12s %-7s\n",
             "all ",
-            TextUtilities.formatTwoDecimals(avgAccuracy * 100),
+//            TextUtilities.formatTwoDecimals(avgAccuracy * 100),
             TextUtilities.formatTwoDecimals(avgPrecision * 100),
             TextUtilities.formatTwoDecimals(avgRecall * 100),
             TextUtilities.formatTwoDecimals(avgF1 * 100))
