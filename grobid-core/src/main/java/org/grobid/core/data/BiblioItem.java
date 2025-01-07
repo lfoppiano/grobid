@@ -4525,18 +4525,6 @@ public class BiblioItem {
         return this.copyrightsLicense;
     }
 
-    public List<String> getDiscardedPieces() {
-        return discardedPieces;
-    }
-
-    public void setDiscardedPieces(List<String> discardedPieces) {
-        this.discardedPieces = discardedPieces;
-    }
-
-    public void addDiscardedPiece(String piece) {
-        this.discardedPieces.add(piece);
-    }
-
     public List<List<LayoutToken>> getDiscardedPiecesTokens() {
         return discardedPiecesTokens;
     }
