@@ -63,11 +63,29 @@ public class GrobidRestProcessFiles {
      * @param consolidate consolidation parameter for the header extraction
      * @return a response object which contains a TEI representation of the header part
      */
+     public Response processStatelessHeaderDocument(
+        final InputStream inputStream,
+        final int consolidate,
+        final boolean includeRawAffiliations,
+        final boolean includeRawCopyrights,
+        ExpectedResponseType expectedResponseType
+    ) {
+         return processStatelessHeaderDocument(
+             inputStream,
+             consolidate,
+             includeRawAffiliations,
+             includeRawCopyrights,
+             false,
+             expectedResponseType
+         );
+     }
+
     public Response processStatelessHeaderDocument(
         final InputStream inputStream,
         final int consolidate,
         final boolean includeRawAffiliations,
         final boolean includeRawCopyrights,
+        final boolean includeDiscardedText,
         ExpectedResponseType expectedResponseType
     ) {
         LOGGER.debug(methodLogIn());
@@ -106,6 +124,7 @@ public class GrobidRestProcessFiles {
                 consolidate,
                 includeRawAffiliations,
                 includeRawCopyrights,
+                includeDiscardedText,
                 result
             );
 
@@ -156,7 +175,8 @@ public class GrobidRestProcessFiles {
         final int consolidateHeader,
         final int consolidateFunders,
         final boolean includeRawAffiliations,
-        final boolean includeRawCopyrights
+        final boolean includeRawCopyrights,
+        final boolean includeDiscardedText
     ) {
         LOGGER.debug(methodLogIn());
         String retVal = null;
@@ -192,7 +212,8 @@ public class GrobidRestProcessFiles {
                 consolidateHeader,
                 consolidateFunders,
                 includeRawAffiliations,
-                includeRawCopyrights
+                includeRawCopyrights,
+                includeDiscardedText
             );
 
             if (GrobidRestUtils.isResultNullOrEmpty(retVal)) {
@@ -249,6 +270,7 @@ public class GrobidRestProcessFiles {
                                         final boolean includeRawAffiliations,
                                         final boolean includeRawCitations,
                                         final boolean includeRawCopyrights,
+                                          final boolean includeDiscardedText,
                                         final int startPage,
                                         final int endPage,
                                         final boolean generateIDs,
@@ -290,6 +312,7 @@ public class GrobidRestProcessFiles {
                     .includeRawAffiliations(includeRawAffiliations)
                     .includeRawCitations(includeRawCitations)
                     .includeRawCopyrights(includeRawCopyrights)
+                    .includeDiscardedText(includeDiscardedText)
                     .startPage(startPage)
                     .endPage(endPage)
                     .generateTeiIds(generateIDs)
